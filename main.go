@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sort"
+	"time"
 
 	"golang.org/x/tour/tree"
 )
@@ -29,12 +30,29 @@ func Same(t1, t2 *tree.Tree) bool {
 	go Walk(t1, ch1)
 	go Walk(t2, ch2)
 
-	for i := 0; i < 10; i++ {
-		x := <-ch1
-		tree1 = append(tree1, x)
-		x = <-ch2
-		tree2 = append(tree2, x)
+	// for i := 0; i < 10; i++ {
+	// 	x := <-ch1
+	// 	tree1 = append(tree1, x)
+	// 	x = <-ch2
+	// 	tree2 = append(tree2, x)
 
+	// }
+
+	br := false
+	time.Sleep(1 * time.Second)
+	for {
+		select {
+		case x := <-ch1:
+			tree1 = append(tree1, x)
+		case x := <-ch2:
+			tree2 = append(tree2, x)
+		default:
+			br = true
+		}
+
+		if br {
+			break
+		}
 	}
 
 	fmt.Println(tree1)
