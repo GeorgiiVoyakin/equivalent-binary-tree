@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"sort"
 
 	"golang.org/x/tour/tree"
 )
@@ -10,53 +9,43 @@ import (
 // Walk walks the tree t sending all values
 // from the tree to the channel ch.
 func Walk(t *tree.Tree, ch chan int) {
+	walk(t, ch)
+	close(ch)
+}
+
+func walk(t *tree.Tree, ch chan int) {
+	if t == nil {
+		return
+	}
+
+	walk(t.Left, ch)
 	ch <- t.Value
-	if t.Left != nil {
-		go Walk(t.Left, ch)
-	}
-	if t.Right != nil {
-		go Walk(t.Right, ch)
-	}
+	walk(t.Right, ch)
 }
 
 // Same determines whether the trees
 // t1 and t2 contain the same values.
 func Same(t1, t2 *tree.Tree) bool {
-	var tree1 []int
-	var tree2 []int
 	ch1 := make(chan int)
 	ch2 := make(chan int)
 	go Walk(t1, ch1)
 	go Walk(t2, ch2)
 
-	for i := 0; i < 10; i++ {
-		x := <-ch1
-		tree1 = append(tree1, x)
-		x = <-ch2
-		tree2 = append(tree2, x)
+	for {
+		v1, ok1 := <-ch1
+		v2, ok2 := <-ch2
 
-	}
+		if !ok1 && !ok2 {
+			return true
+		}
 
-	fmt.Println(tree1)
-	fmt.Println(tree2)
-	sort.Slice(tree1, func(i, j int) bool { return tree1[i] < tree1[j] })
-	sort.Slice(tree2, func(i, j int) bool { return tree2[i] < tree2[j] })
-
-	fmt.Println(tree1)
-	fmt.Println(tree2)
-
-	if len(tree1) != len(tree2) {
-		return false
-	}
-
-	for i := 0; i < len(tree1); i++ {
-		if tree1[i] != tree2[i] {
+		if v1 != v2 {
 			return false
 		}
 	}
-	return true
 }
 
 func main() {
-	fmt.Println(Same(tree.New(2), tree.New(2)))
+	fmt.Println("True:", Same(tree.New(1), tree.New(1)))
+	fmt.Println("False:", Same(tree.New(1), tree.New(2)))
 }
